@@ -10,6 +10,9 @@ namespace ProceduralSkyMod
 	class SkyCamConstraint : MonoBehaviour
 	{
 		public Transform mainCam;
+		public Camera main;
+		public Camera sky;
+		public Camera env;
 
 		private void Start ()
 		{
@@ -19,6 +22,7 @@ namespace ProceduralSkyMod
 		void Update ()
 		{
 			transform.rotation = mainCam.rotation;
+			env.fieldOfView = sky.fieldOfView = main.fieldOfView;
 		}
 	}
 }

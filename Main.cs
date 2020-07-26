@@ -15,8 +15,6 @@ namespace ProceduralSkyMod
 		public static bool enabled;
 		public static bool initialized;
 
-		private static GameObject pSkyManager;
-
 		public static string Path { get; private set; }
 
 		static bool Load (UnityModManager.ModEntry modEntry)
@@ -58,7 +56,6 @@ namespace ProceduralSkyMod
 			Debug.Log(">>> >>> >>> Cybex_ProceduralSkyMod : Stop Mod...");
 #endif
 			initialized = false;
-			GameObject.Destroy(pSkyManager);
 		}
 
 		static void OnUpdate (UnityModManager.ModEntry modEntry, float delta)
