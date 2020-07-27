@@ -5,16 +5,18 @@ namespace ProceduralSkyMod
 {
 	public class SkyManager : MonoBehaviour
 	{
+		// TODO: solve cloud hopping problem
+
 		private Color ambientDay = new Color(.282f, .270f, .243f, 1f);
 		private Color ambientNight = new Color(.079f, .079f, .112f, 1f);
 		private Color defaultFog, nightFog;
 
 		public float latitude = 0f;
 
+		private Vector3 worldPos;
+
 		private Transform skyboxNight;
 		private Transform moonBillboard;
-
-		private Transform mainCam;
 
 		public Transform SkyboxNight {
 			get => skyboxNight;
@@ -40,13 +42,28 @@ namespace ProceduralSkyMod
 		public Material SkyMaterial { get; set; }
 		public Material CloudMaterial { get; set; }
 
+		public Transform SkyCam { get; set; }
+		public Transform CloudPlane { get; set; }
+
+
+		float pY, cY, delta, dMin, dMax;
+
 		void Start ()
 		{
-			mainCam = GameObject.FindGameObjectWithTag("MainCamera").transform;
 			defaultFog = RenderSettings.fogColor;
 			nightFog = new Color(defaultFog.r * 0.1f, defaultFog.g * 0.1f, defaultFog.b * 0.1f, 1f);
+			Debug.Log(string.Format("Fog: d = {0}, n = {1}", defaultFog, nightFog));
 
 			StartCoroutine(CloudChanger());
+
+			// DEBUG
+			pY = PlayerManager.PlayerTransform.position.y;
+			cY = PlayerManager.PlayerCamera.transform.position.y;
+			delta = dMin = dMax = cY - pY;
+			// END DEBUG
+
+			SkyCam.localPosition = Vector3.zero + Vector3.up * delta;
+			CloudPlane.localPosition = SkyCam.localPosition;
 		}
 
 		void Update ()
@@ -54,7 +71,8 @@ namespace ProceduralSkyMod
 			skyboxNight.Rotate(Vector3.forward, 0.01f, Space.Self);
 			moonBillboard.Rotate(Vector3.forward, -0.01f, Space.Self);
 
-			transform.position = new Vector3(mainCam.position.x * .001f, 0, mainCam.position.z * .001f);
+			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
+			transform.position = new Vector3(worldPos.x * .001f, 0, worldPos.z * .001f);
 
 			Vector3 sunPos = Sun.transform.position;
 			Sun.intensity = Mathf.Clamp01(sunPos.y);
@@ -71,6 +89,20 @@ namespace ProceduralSkyMod
 
 			cloudCurrent = Mathf.Lerp(cloudCurrent, cloudTarget, Time.deltaTime * 0.1f);
 			CloudMaterial.SetFloat("_ClearSky", cloudCurrent);
+
+			// DEBUG
+			pY = PlayerManager.PlayerTransform.position.y;
+			cY = PlayerManager.PlayerCamera.transform.position.y;
+			delta = cY - pY;
+
+			SkyCam.localPosition = Vector3.zero + Vector3.up * delta;
+
+			if (delta < dMin) dMin = delta;
+			if (delta > dMax) dMax = delta;
+
+			Debug.Log(string.Format(
+				"CAM > delta {0}, min: {1}, max: {2}", 
+				delta, dMin, dMax));
 		}
 
 		void OnDisable ()

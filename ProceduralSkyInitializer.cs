@@ -29,7 +29,7 @@ namespace ProceduralSkyMod
 			// Set skybox material
 			Material skyMaterial = bundle.transform.Find("Sky").GetComponent<MeshRenderer>().sharedMaterial;
 
-			skyMaterial.SetColor("_SkyTint", new Color(0.2f, 0.5f, 0.9f, 1f));
+			skyMaterial.SetColor("_SkyTint", new Color(0.3f, 0.3f, 0.8f, 1f));
 			skyMaterial.SetColor("_GroundColor", new Color(0.369f, 0.349f, 0.341f, 1f));
 
 #if DEBUG
@@ -155,11 +155,13 @@ namespace ProceduralSkyMod
 			skyManager.SkyboxNight = dsSkyboxNight.transform;
 			skyManager.Sun = dirLight;
 
+			skyManager.CloudPlane = cloudPlane.transform;
 			skyManager.CloudMaterial = cloudMat;
 
 			skyManager.StarMaterial = starBox.GetComponent<MeshRenderer>().sharedMaterial;
 			skyManager.StarMaterial.SetFloat("_Exposure", 1.5f);
 
+			skyManager.SkyCam = skyCam.transform;
 			skyManager.SkyMaterial = skyMaterial;
 
 			skyManager.MoonBillboard = moonBillboard.transform;
@@ -174,6 +176,12 @@ namespace ProceduralSkyMod
 
 			// fog setup
 			//RenderSettings.fog = false;
+
+			GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			go.transform.ResetLocal();
+			go.transform.position += Vector3.up * 130;
+			go.transform.localScale *= 10;
+
 #if DEBUG
 			Debug.Log(">>> >>> >>> Cybex_ProceduralSkyMod : Initializer Finished Setup...");
 #endif
