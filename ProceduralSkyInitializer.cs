@@ -157,12 +157,15 @@ namespace ProceduralSkyMod
 
 			skyManager.CloudPlane = cloudPlane.transform;
 			skyManager.CloudMaterial = cloudMat;
+			skyManager.CloudMaterial.SetFloat("_CloudSpeed", 0.03f);
 
 			skyManager.StarMaterial = starBox.GetComponent<MeshRenderer>().sharedMaterial;
 			skyManager.StarMaterial.SetFloat("_Exposure", 1.5f);
 
 			skyManager.SkyCam = skyCam.transform;
 			skyManager.SkyMaterial = skyMaterial;
+
+			skyManager.EnvCam = envCam.transform;
 
 			skyManager.MoonBillboard = moonBillboard.transform;
 
@@ -177,14 +180,14 @@ namespace ProceduralSkyMod
 			// fog setup
 			//RenderSettings.fog = false;
 
+#if DEBUG
+			Debug.Log(">>> >>> >>> Cybex_ProceduralSkyMod : Initializer Finished Setup...");
+#endif
+
 			GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
 			go.transform.ResetLocal();
 			go.transform.position += Vector3.up * 130;
 			go.transform.localScale *= 10;
-
-#if DEBUG
-			Debug.Log(">>> >>> >>> Cybex_ProceduralSkyMod : Initializer Finished Setup...");
-#endif
 		}
 	}
 }

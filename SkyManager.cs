@@ -44,9 +44,7 @@ namespace ProceduralSkyMod
 
 		public Transform SkyCam { get; set; }
 		public Transform CloudPlane { get; set; }
-
-
-		float pY, cY, delta, dMin, dMax;
+		public Transform EnvCam { get; set; }
 
 		void Start ()
 		{
@@ -55,15 +53,6 @@ namespace ProceduralSkyMod
 			Debug.Log(string.Format("Fog: d = {0}, n = {1}", defaultFog, nightFog));
 
 			StartCoroutine(CloudChanger());
-
-			// DEBUG
-			pY = PlayerManager.PlayerTransform.position.y;
-			cY = PlayerManager.PlayerCamera.transform.position.y;
-			delta = dMin = dMax = cY - pY;
-			// END DEBUG
-
-			SkyCam.localPosition = Vector3.zero + Vector3.up * delta;
-			CloudPlane.localPosition = SkyCam.localPosition;
 		}
 
 		void Update ()
@@ -74,7 +63,7 @@ namespace ProceduralSkyMod
 			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
 			transform.position = new Vector3(worldPos.x * .001f, 0, worldPos.z * .001f);
 
-			Vector3 sunPos = Sun.transform.position;
+			Vector3 sunPos = Sun.transform.position - transform.position;
 			Sun.intensity = Mathf.Clamp01(sunPos.y);
 
 			StarMaterial.SetFloat("_Visibility", (-Sun.intensity + 1) * .1f);
@@ -89,20 +78,6 @@ namespace ProceduralSkyMod
 
 			cloudCurrent = Mathf.Lerp(cloudCurrent, cloudTarget, Time.deltaTime * 0.1f);
 			CloudMaterial.SetFloat("_ClearSky", cloudCurrent);
-
-			// DEBUG
-			pY = PlayerManager.PlayerTransform.position.y;
-			cY = PlayerManager.PlayerCamera.transform.position.y;
-			delta = cY - pY;
-
-			SkyCam.localPosition = Vector3.zero + Vector3.up * delta;
-
-			if (delta < dMin) dMin = delta;
-			if (delta > dMax) dMax = delta;
-
-			Debug.Log(string.Format(
-				"CAM > delta {0}, min: {1}, max: {2}", 
-				delta, dMin, dMax));
 		}
 
 		void OnDisable ()
