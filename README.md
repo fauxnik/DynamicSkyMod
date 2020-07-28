@@ -1,3 +1,3 @@
 # DynamicSkyMod
 
-Resources folder goes into mod folder
+Resources folder goes into mod installation folder
