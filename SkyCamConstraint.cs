@@ -11,12 +11,12 @@ namespace ProceduralSkyMod
 	{
 		public Camera main;
 		public Camera sky;
-		public Camera env;
+		public Camera clear;
 
 		void Update ()
 		{
-			env.transform.rotation = sky.transform.rotation = main.transform.rotation;
-			env.fieldOfView = sky.fieldOfView = main.fieldOfView;
+			clear.transform.rotation = sky.transform.rotation = main.transform.rotation;
+			clear.fieldOfView = sky.fieldOfView = main.fieldOfView;
 		}
 	}
 }

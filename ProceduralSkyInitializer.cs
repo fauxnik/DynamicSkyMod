@@ -3,7 +3,9 @@ using System.IO;
 using UnityModManagerNet;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering.PostProcessing;
 using System.Collections.Generic;
+using Facepunch;
 
 namespace ProceduralSkyMod
 {
@@ -62,20 +64,14 @@ namespace ProceduralSkyMod
 #endif
 			// main cam
 			mainCam = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
-			mainCam.clearFlags = CameraClearFlags.Skybox;
-			mainCam.cullingMask = 0;
-			mainCam.depth = -1;
-			// env cam
-			Camera envCam = new GameObject() { name = "EnvCam" }.AddComponent<Camera>();
-			envCam.transform.SetParent(mainCam.transform);
-			envCam.transform.ResetLocal();
-			envCam.clearFlags = CameraClearFlags.Depth;
-			envCam.cullingMask = -1;
-			envCam.cullingMask &= ~(1 << 31);
-			envCam.depth = 1;
-			envCam.fieldOfView = mainCam.fieldOfView;
-			envCam.nearClipPlane = mainCam.nearClipPlane;
-			envCam.farClipPlane = mainCam.farClipPlane;
+			mainCam.clearFlags = CameraClearFlags.Depth;
+			mainCam.cullingMask = -1;
+			mainCam.cullingMask &= ~(1 << 31);
+			mainCam.depth = 1;
+			mainCam.fieldOfView = mainCam.fieldOfView;
+			mainCam.nearClipPlane = mainCam.nearClipPlane;
+			mainCam.farClipPlane = mainCam.farClipPlane;
+
 			// sky cam
 			Camera skyCam = new GameObject() { name = "SkyCam" }.AddComponent<Camera>();
 			skyCam.transform.SetParent(dsMaster.transform);
@@ -89,9 +85,17 @@ namespace ProceduralSkyMod
 			skyCam.nearClipPlane = mainCam.nearClipPlane;
 			skyCam.farClipPlane = 100;
 
+			// env cam
+			Camera clearCam = new GameObject() { name = "ClearCam" }.AddComponent<Camera>();
+			clearCam.transform.SetParent(mainCam.transform);
+			clearCam.transform.ResetLocal();
+			clearCam.clearFlags = CameraClearFlags.Skybox;
+			clearCam.cullingMask = 0;
+			clearCam.depth = -1;
+
 			constraint.main = mainCam;
 			constraint.sky = skyCam;
-			constraint.env = envCam;
+			constraint.clear = clearCam;
 
 #if DEBUG
 			Debug.Log(">>> >>> >>> Setting Up Cloud Plane...");
@@ -165,7 +169,7 @@ namespace ProceduralSkyMod
 			skyManager.SkyCam = skyCam.transform;
 			skyManager.SkyMaterial = skyMaterial;
 
-			skyManager.EnvCam = envCam.transform;
+			skyManager.EnvCam = clearCam.transform;
 
 			skyManager.MoonBillboard = moonBillboard.transform;
 
@@ -191,8 +195,3 @@ namespace ProceduralSkyMod
 		}
 	}
 }
-
-// 13 - CameraHolder
-// 22 - Directional Light
-// 27 - Global Post Processing
-// 242 - Reflection Probes Camera

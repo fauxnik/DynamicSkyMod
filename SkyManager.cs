@@ -50,15 +50,14 @@ namespace ProceduralSkyMod
 		{
 			defaultFog = RenderSettings.fogColor;
 			nightFog = new Color(defaultFog.r * 0.1f, defaultFog.g * 0.1f, defaultFog.b * 0.1f, 1f);
-			Debug.Log(string.Format("Fog: d = {0}, n = {1}", defaultFog, nightFog));
 
 			StartCoroutine(CloudChanger());
 		}
 
 		void Update ()
 		{
-			skyboxNight.Rotate(Vector3.forward, 0.01f, Space.Self);
-			moonBillboard.Rotate(Vector3.forward, -0.01f, Space.Self);
+			skyboxNight.Rotate(Vector3.forward, 1f * Time.deltaTime, Space.Self);
+			moonBillboard.Rotate(Vector3.forward, -0.9f * Time.deltaTime, Space.Self);
 
 			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
 			transform.position = new Vector3(worldPos.x * .001f, 0, worldPos.z * .001f);
@@ -90,7 +89,7 @@ namespace ProceduralSkyMod
 		{
 			while (true)
 			{
-				yield return new WaitForSeconds(30);
+				yield return new WaitForSeconds(60);
 				// .5 to 5 to test it
 				cloudTarget = Mathf.Clamp(Random.value * 5, .5f, 5f);
 #if DEBUG
