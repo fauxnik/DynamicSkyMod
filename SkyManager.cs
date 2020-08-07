@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace ProceduralSkyMod
@@ -12,6 +13,15 @@ namespace ProceduralSkyMod
 		private Color defaultFog, nightFog;
 
 		public float latitude = 0f;
+		public float longitude = 0f;
+
+		private const float millisecondsPer15Degrees = 240000;
+		private DateTime dayStart;
+		private DateTime yearEnd;
+		private int DaysInYear
+        {
+			get => new DateTime(yearEnd.Year, yearEnd.Month, yearEnd.Day).DayOfYear;
+        }
 
 		private Vector3 worldPos;
 
@@ -56,7 +66,45 @@ namespace ProceduralSkyMod
 
 		void Update ()
 		{
-			skyboxNight.Rotate(Vector3.forward, 1f * Time.deltaTime, Space.Self);
+			DateTime clockTime = TimeSource.GetCurrentTime();
+
+			if (yearEnd == null || yearEnd.Year != clockTime.Year)
+			{
+				yearEnd = new DateTime(clockTime.Year, 12, 31);
+			}
+			if (dayStart != null && dayStart.Day + 1 == clockTime.Day)
+			{
+				// anti-rotating the sun slightly keeps the solar day centered around solar noon
+				Sun.transform.rotation = Quaternion.AngleAxis(-360 * clockTime.DayOfYear / DaysInYear, Sun.transform.forward);
+			}
+			if (dayStart == null || dayStart.Day != clockTime.Day)
+            {
+				dayStart = new DateTime(clockTime.Year, clockTime.Month, clockTime.Day);
+            }
+
+			DateTime solarTime = new DateTime(
+				clockTime.Year,
+				clockTime.Month,
+				clockTime.Day,
+				clockTime.Hour,
+				clockTime.Minute,
+				clockTime.Second,
+				clockTime.Millisecond,
+				DateTimeKind.Utc).AddMilliseconds(longitude * millisecondsPer15Degrees).ToLocalTime();
+			TimeSpan timeSinceMidnight = solarTime.Subtract(dayStart);
+
+			// rotating the skybox 1 extra rotation per year causes the night sky to differ between summer and winter
+			float yearlyAngle = 360 * clockTime.DayOfYear / DaysInYear;
+			float dailyAngle = 360 * (float)timeSinceMidnight.TotalHours / 24;
+			skyboxNight.rotation = Quaternion.AngleAxis((dailyAngle + yearlyAngle) % 360, skyboxNight.forward);
+			// TODO: calculate moon rotation from date
+			// will be comprised of dailyAngle minus(?) phaseAngle (need to double check this relationship)
+			// can calculate phaseAngle from date
+			//   -> algorithm source: https://www.subsystems.us/uploads/9/8/9/4/98948044/moonphase.pdf
+			// moon is "straight down" when rotation around self.forward is 0
+			// can remove 180deg from x-axis in MoonBillboard property setter above, if desired
+			//   -> would make moon point "straight up" when rotation around self.forward is 0
+			//   -> would require flipping the sign of rotation around self.forward here
 			moonBillboard.Rotate(Vector3.forward, -0.9f * Time.deltaTime, Space.Self);
 
 			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
@@ -91,7 +139,7 @@ namespace ProceduralSkyMod
 			{
 				yield return new WaitForSeconds(60);
 				// .5 to 5 to test it
-				cloudTarget = Mathf.Clamp(Random.value * 5, .5f, 5f);
+				cloudTarget = Mathf.Clamp(UnityEngine.Random.value * 5, .5f, 5f);
 #if DEBUG
 				Debug.Log(string.Format("New Cloud Target of {0}, current {1}", cloudTarget, cloudCurrent));
 #endif
