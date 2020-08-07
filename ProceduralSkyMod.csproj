@@ -373,6 +373,9 @@
     <Compile Include="SkyManager.cs" />
     <Compile Include="TransformExtensions.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>mkdir "$(DVInstallPath)Mods\$(SolutionName)\"
