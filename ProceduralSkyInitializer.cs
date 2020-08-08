@@ -121,7 +121,9 @@ namespace ProceduralSkyMod
 #if DEBUG
 			Debug.Log(">>> >>> >>> Setting Up Sun Position...");
 #endif
-			dirLight.transform.SetParent(dsSkyboxNight.transform);
+			GameObject sunMover = new GameObject();
+			sunMover.transform.SetParent(dsSkyboxNight.transform, false);
+			dirLight.transform.SetParent(sunMover.transform);
 			dirLight.transform.ResetLocal();
 			dirLight.transform.position += Vector3.up * 10;
 			dirLight.transform.localRotation = Quaternion.Euler(new Vector3(90, 0, 0));
@@ -158,6 +160,7 @@ namespace ProceduralSkyMod
 			// assign skyboxNight after sun is positioned to get correct sun rotation
 			skyManager.SkyboxNight = dsSkyboxNight.transform;
 			skyManager.Sun = dirLight;
+			skyManager.SunMover = sunMover.transform;
 
 			skyManager.CloudPlane = cloudPlane.transform;
 			skyManager.CloudMaterial = cloudMat;

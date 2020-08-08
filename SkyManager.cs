@@ -25,8 +25,14 @@ namespace ProceduralSkyMod
 
 		private Vector3 worldPos;
 
+		private Transform sunMover;
 		private Transform skyboxNight;
 		private Transform moonBillboard;
+
+		public Transform SunMover {
+			get => sunMover;
+			set => sunMover = value;
+        }
 
 		public Transform SkyboxNight {
 			get => skyboxNight;
@@ -43,7 +49,7 @@ namespace ProceduralSkyMod
 			set
 			{
 				moonBillboard = value;
-				moonBillboard.localRotation = Quaternion.Euler(new Vector3(-latitude + 23.4f + 5.14f + 180f, 0, 0));
+				moonBillboard.localRotation = Quaternion.Euler(new Vector3(-latitude + 23.4f + 5.14f, 0, 0));
 			}
 		}
 
@@ -72,40 +78,33 @@ namespace ProceduralSkyMod
 			{
 				yearEnd = new DateTime(clockTime.Year, 12, 31);
 			}
-			if (dayStart != null && dayStart.Day + 1 == clockTime.Day)
-			{
-				// anti-rotating the sun slightly keeps the solar day centered around solar noon
-				Sun.transform.rotation = Quaternion.AngleAxis(-360 * clockTime.DayOfYear / DaysInYear, Sun.transform.forward);
-			}
 			if (dayStart == null || dayStart.Day != clockTime.Day)
             {
 				dayStart = new DateTime(clockTime.Year, clockTime.Month, clockTime.Day);
             }
 
+			DateTime utcTime = clockTime.ToUniversalTime();
 			DateTime solarTime = new DateTime(
-				clockTime.Year,
-				clockTime.Month,
-				clockTime.Day,
-				clockTime.Hour,
-				clockTime.Minute,
-				clockTime.Second,
-				clockTime.Millisecond,
-				DateTimeKind.Utc).AddMilliseconds(longitude * millisecondsPer15Degrees).ToLocalTime();
+				utcTime.Year,
+				utcTime.Month,
+				utcTime.Day,
+				utcTime.Hour,
+				utcTime.Minute,
+				utcTime.Second,
+				utcTime.Millisecond,
+				DateTimeKind.Local).AddMilliseconds(longitude * millisecondsPer15Degrees);
 			TimeSpan timeSinceMidnight = solarTime.Subtract(dayStart);
+			float dayFration = (float)timeSinceMidnight.TotalHours / 24;
 
 			// rotating the skybox 1 extra rotation per year causes the night sky to differ between summer and winter
-			float yearlyAngle = 360 * clockTime.DayOfYear / DaysInYear;
-			float dailyAngle = 360 * (float)timeSinceMidnight.TotalHours / 24;
+			float yearlyAngle = 360 * (clockTime.DayOfYear + dayFration) / DaysInYear;
+			float dailyAngle = 360 * dayFration;
 			skyboxNight.rotation = Quaternion.AngleAxis((dailyAngle + yearlyAngle) % 360, skyboxNight.forward);
-			// TODO: calculate moon rotation from date
-			// will be comprised of dailyAngle minus(?) phaseAngle (need to double check this relationship)
-			// can calculate phaseAngle from date
-			//   -> algorithm source: https://www.subsystems.us/uploads/9/8/9/4/98948044/moonphase.pdf
-			// moon is "straight down" when rotation around self.forward is 0
-			// can remove 180deg from x-axis in MoonBillboard property setter above, if desired
-			//   -> would make moon point "straight up" when rotation around self.forward is 0
-			//   -> would require flipping the sign of rotation around self.forward here
-			moonBillboard.Rotate(Vector3.forward, -0.9f * Time.deltaTime, Space.Self);
+			// anti-rotating the sun 1 rotation per year keeps the solar day centered on solar noon
+			SunMover.rotation = Quaternion.AngleAxis(-yearlyAngle, SunMover.forward);
+			// moon is new when rotation around self.forward is 0
+			float phaseAngle = ComputeMoonPhase(solarTime);
+			moonBillboard.rotation = Quaternion.AngleAxis((dailyAngle - phaseAngle) % 360, moonBillboard.forward);
 
 			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
 			transform.position = new Vector3(worldPos.x * .001f, 0, worldPos.z * .001f);
@@ -144,6 +143,29 @@ namespace ProceduralSkyMod
 				Debug.Log(string.Format("New Cloud Target of {0}, current {1}", cloudTarget, cloudCurrent));
 #endif
 			}
+		}
+
+		// phase range is [0-360)
+		// taken from https://www.subsystems.us/uploads/9/8/9/4/98948044/moonphase.pdf
+		float ComputeMoonPhase(DateTime now)
+        {
+			var jDays = ToJulianDays(now);
+			var jDaysSinceKnownNewMoon = jDays - 2451549.5; // known new moon on 2000 January 6
+			var newMoonsSinceKnownNewMoon = jDaysSinceKnownNewMoon / 29.53;
+			var fractionOfCycleSinceLastNewMoon = newMoonsSinceKnownNewMoon % 1;
+			return (float)(360 * fractionOfCycleSinceLastNewMoon);
+		}
+
+		double ToJulianDays(DateTime now)
+        {
+			var fractionOfDaySinceMidnight = now.Subtract(new DateTime(now.Year, now.Month, now.Day)).TotalHours / 24;
+			int Y = now.Year, M = now.Month, D = now.Day;
+			int A = Y / 100;
+			int B = A / 4;
+			int C = 2 - A + B;
+			int E = (int)(365.25 * (Y + 4716));
+			int F = (int)(30.6001 * (M + 1));
+			return C + D + E + F - 1524.5 + fractionOfDaySinceMidnight;
 		}
 	}
 }
