@@ -15,7 +15,6 @@ namespace ProceduralSkyMod
 		public float latitude = 0f;
 		public float longitude = 0f;
 
-		private const float millisecondsPer15Degrees = 240000;
 		private DateTime dayStart;
 		private DateTime yearEnd;
 		private int DaysInYear
@@ -25,42 +24,24 @@ namespace ProceduralSkyMod
 
 		private Vector3 worldPos;
 
-		Quaternion sunMoverInit;
-		Quaternion skyboxNightInit;
-		Quaternion moonBillboardInit;
-
 		private Transform sunMover;
 		private Transform skyboxNight;
 		private Transform moonBillboard;
 
 		public Transform SunMover {
 			get => sunMover;
-			set
-			{
-				sunMover = value;
-				sunMoverInit = sunMover.rotation;
-			}
+			set => sunMover = value;
         }
 
 		public Transform SkyboxNight {
 			get => skyboxNight;
-			set
-			{
-				skyboxNight = value;
-				skyboxNight.localRotation = Quaternion.Euler(new Vector3(-latitude, 0, 0));
-				skyboxNightInit = skyboxNight.rotation;
-			}
+			set => skyboxNight = value;
 		}
 
 		public Transform MoonBillboard
 		{
 			get => moonBillboard;
-			set
-			{
-				moonBillboard = value;
-				moonBillboard.localRotation = Quaternion.Euler(new Vector3(-latitude + 23.4f + 5.14f, 0, 0));
-				moonBillboardInit = moonBillboard.rotation;
-			}
+			set => moonBillboard = value;
 		}
 
 		public Light Sun { get; set; }
@@ -98,32 +79,21 @@ namespace ProceduralSkyMod
 				dayStart = new DateTime(clockTime.Year, clockTime.Month, clockTime.Day);
 			}
 
-			DateTime utcTime = clockTime.ToUniversalTime();
-			DateTime solarTime = new DateTime(
-				utcTime.Year,
-				utcTime.Month,
-				utcTime.Day,
-				utcTime.Hour,
-				utcTime.Minute,
-				utcTime.Second,
-				utcTime.Millisecond,
-				DateTimeKind.Local).AddMilliseconds(longitude * millisecondsPer15Degrees);
+			DateTime utcTime = clockTime - TimeZoneInfo.Local.GetUtcOffset(clockTime);
+			if (TimeZoneInfo.Local.IsDaylightSavingTime(clockTime)) { utcTime.AddHours(-1); }
+			DateTime solarTime = utcTime.AddHours(longitude / 15);
 			TimeSpan timeSinceMidnight = solarTime.Subtract(dayStart);
 			float dayFration = (float)timeSinceMidnight.TotalHours / 24;
 
 			// rotating the skybox 1 extra rotation per year causes the night sky to differ between summer and winter
 			float yearlyAngle = 360 * (clockTime.DayOfYear + dayFration) / DaysInYear;
 			float dailyAngle = 360 * dayFration;
-			skyboxNight.localRotation = Quaternion.Euler(0, 0, (dailyAngle + yearlyAngle) % 360) * skyboxNightInit;
+			skyboxNight.localRotation = Quaternion.Euler(-latitude, 0, (dailyAngle + yearlyAngle) % 360);
 			// anti-rotating the sun 1 rotation per year keeps the solar day centered on solar noon
-			sunMover.localRotation = Quaternion.Euler(0, 0, -yearlyAngle) * sunMoverInit;
+			sunMover.localRotation = Quaternion.Euler(0, 0, -yearlyAngle);
 			// moon is new when rotation around self.forward is 0
 			float phaseAngle = ComputeMoonPhase(solarTime);
-			moonBillboard.localRotation = Quaternion.Euler(0, 0, (dailyAngle - phaseAngle) % 360) * moonBillboardInit;
-
-			/*Debug.Log($"stars rotation: {skyboxNight.localRotation.eulerAngles}\n" +
-				$"sun rotation (relative): {sunMover.localRotation.eulerAngles}\n" +
-				$"moon rotation (absolute): {moonBillboard.localRotation.eulerAngles}");*/
+			moonBillboard.localRotation = Quaternion.Euler(-latitude + 23.4f + 5.14f, 0, (dailyAngle - phaseAngle) % 360);
 
 			// movement
 			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
