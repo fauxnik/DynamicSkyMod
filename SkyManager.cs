@@ -12,13 +12,6 @@ namespace ProceduralSkyMod
 		private Color ambientNight = new Color(.079f, .079f, .112f, 1f);
 		private Color defaultFog, nightFog;
 
-		private DateTime dayStart;
-		private DateTime yearEnd;
-		private int DaysInYear
-        {
-			get => new DateTime(yearEnd.Year, yearEnd.Month, yearEnd.Day).DayOfYear;
-        }
-
 		private Vector3 worldPos;
 
 		private Transform sunMover;
@@ -66,28 +59,24 @@ namespace ProceduralSkyMod
 		{
 			// rotation
 			DateTime clockTime = TimeSource.GetCurrentTime();
-
-			if (yearEnd == null || yearEnd.Year != clockTime.Year)
-			{
-				yearEnd = new DateTime(clockTime.Year, 12, 31);
-			}
-			if (dayStart == null || dayStart.Day != clockTime.Day)
-			{
-				dayStart = new DateTime(clockTime.Year, clockTime.Month, clockTime.Day);
-			}
+			DateTime dayStart = new DateTime(clockTime.Year, clockTime.Month, clockTime.Day);
+			DateTime yearEnd = new DateTime(clockTime.Year, 12, 31);
+			int daysInYear = yearEnd.DayOfYear;
 
 			DateTime utcTime = clockTime - TimeZoneInfo.Local.GetUtcOffset(clockTime);
 			if (TimeZoneInfo.Local.IsDaylightSavingTime(clockTime)) { utcTime.AddHours(-1); }
 			DateTime solarTime = utcTime.AddHours(Main.settings.longitude / 15);
 			TimeSpan timeSinceMidnight = solarTime.Subtract(dayStart);
 			float dayFration = (float)timeSinceMidnight.TotalHours / 24;
+			float yearFraction = (clockTime.DayOfYear + dayFration) / daysInYear;
 
 			// rotating the skybox 1 extra rotation per year causes the night sky to differ between summer and winter
-			float yearlyAngle = 360 * (clockTime.DayOfYear + dayFration) / DaysInYear;
+			float yearlyAngle = 360 * yearFraction;
 			float dailyAngle = 360 * dayFration + 180; // +180 swaps midnight & noon
 			skyboxNight.localRotation = Quaternion.Euler(-Main.settings.latitude, 0, (dailyAngle + yearlyAngle) % 360);
 			// anti-rotating the sun 1 rotation per year keeps the solar day centered on solar noon
-			sunMover.localRotation = Quaternion.Euler(0, 0, -yearlyAngle);
+			// +x rotation moves sun toward southern hemisphere
+			sunMover.localRotation = Quaternion.Euler(23.4f * Mathf.Cos(2 * Mathf.PI * yearFraction), 0, -yearlyAngle);
 			// moon is new when rotation around self.forward is 0
 			float phaseAngle = ComputeMoonPhase(solarTime);
 			moonBillboard.localRotation = Quaternion.Euler(-Main.settings.latitude + 23.4f + 5.14f, 0, (dailyAngle - phaseAngle) % 360);
@@ -104,6 +93,7 @@ namespace ProceduralSkyMod
 			StarMaterial.SetFloat("_Visibility", (-Sun.intensity + 1) * .01f);
 
 			MoonMaterial.SetFloat("_MoonDayNight", Mathf.Lerp(2.19f, 1.5f, Sun.intensity));
+			// phaseAngle is new at the extremes, but _MoonPhase is full at the extremes, thus +180
 			MoonMaterial.SetFloat("_MoonPhase", Mathf.Lerp(1f, -1f, (phaseAngle + 180) % 360 / 360));
 			MoonMaterial.SetFloat("_Exposure", Mathf.Lerp(2f, 4f, Sun.intensity));
 
