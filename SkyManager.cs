@@ -107,6 +107,7 @@ namespace ProceduralSkyMod
 			StarMaterial.SetFloat("_Visibility", (-Sun.intensity + 1) * .01f);
 
 			MoonMaterial.SetFloat("_MoonDayNight", Mathf.Lerp(2.19f, 1.5f, Sun.intensity));
+			MoonMaterial.SetFloat("_MoonPhase", Mathf.Lerp(1f, -1f, (phaseAngle + 180) % 360 / 360));
 			MoonMaterial.SetFloat("_Exposure", Mathf.Lerp(2f, 4f, Sun.intensity));
 
 			SkyMaterial.SetFloat("_Exposure", Mathf.Lerp(.01f, 1f, Sun.intensity));
