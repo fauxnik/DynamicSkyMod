@@ -25,13 +25,21 @@ namespace ProceduralSkyMod
 
 		private Vector3 worldPos;
 
+		Quaternion sunMoverInit;
+		Quaternion skyboxNightInit;
+		Quaternion moonBillboardInit;
+
 		private Transform sunMover;
 		private Transform skyboxNight;
 		private Transform moonBillboard;
 
 		public Transform SunMover {
 			get => sunMover;
-			set => sunMover = value;
+			set
+			{
+				sunMover = value;
+				sunMoverInit = sunMover.rotation;
+			}
         }
 
 		public Transform SkyboxNight {
@@ -40,6 +48,7 @@ namespace ProceduralSkyMod
 			{
 				skyboxNight = value;
 				skyboxNight.localRotation = Quaternion.Euler(new Vector3(-latitude, 0, 0));
+				skyboxNightInit = skyboxNight.rotation;
 			}
 		}
 
@@ -50,6 +59,7 @@ namespace ProceduralSkyMod
 			{
 				moonBillboard = value;
 				moonBillboard.localRotation = Quaternion.Euler(new Vector3(-latitude + 23.4f + 5.14f, 0, 0));
+				moonBillboardInit = moonBillboard.rotation;
 			}
 		}
 
@@ -79,9 +89,9 @@ namespace ProceduralSkyMod
 				yearEnd = new DateTime(clockTime.Year, 12, 31);
 			}
 			if (dayStart == null || dayStart.Day != clockTime.Day)
-            {
+			{
 				dayStart = new DateTime(clockTime.Year, clockTime.Month, clockTime.Day);
-            }
+			}
 
 			DateTime utcTime = clockTime.ToUniversalTime();
 			DateTime solarTime = new DateTime(
@@ -99,12 +109,16 @@ namespace ProceduralSkyMod
 			// rotating the skybox 1 extra rotation per year causes the night sky to differ between summer and winter
 			float yearlyAngle = 360 * (clockTime.DayOfYear + dayFration) / DaysInYear;
 			float dailyAngle = 360 * dayFration;
-			skyboxNight.rotation = Quaternion.AngleAxis((dailyAngle + yearlyAngle) % 360, skyboxNight.forward);
+			skyboxNight.localRotation = Quaternion.Euler(0, 0, (dailyAngle + yearlyAngle) % 360) * skyboxNightInit;
 			// anti-rotating the sun 1 rotation per year keeps the solar day centered on solar noon
-			SunMover.rotation = Quaternion.AngleAxis(-yearlyAngle, SunMover.forward);
+			sunMover.localRotation = Quaternion.Euler(0, 0, -yearlyAngle) * sunMoverInit;
 			// moon is new when rotation around self.forward is 0
 			float phaseAngle = ComputeMoonPhase(solarTime);
-			moonBillboard.rotation = Quaternion.AngleAxis((dailyAngle - phaseAngle) % 360, moonBillboard.forward);
+			moonBillboard.localRotation = Quaternion.Euler(0, 0, (dailyAngle - phaseAngle) % 360) * moonBillboardInit;
+
+			/*Debug.Log($"stars rotation: {skyboxNight.localRotation.eulerAngles}\n" +
+				$"sun rotation (relative): {sunMover.localRotation.eulerAngles}\n" +
+				$"moon rotation (absolute): {moonBillboard.localRotation.eulerAngles}");*/
 
 			worldPos = PlayerManager.PlayerTransform.position - WorldMover.currentMove;
 			transform.position = new Vector3(worldPos.x * .001f, 0, worldPos.z * .001f);
