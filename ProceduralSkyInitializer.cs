@@ -164,17 +164,16 @@ namespace ProceduralSkyMod
 
 			skyManager.CloudPlane = cloudPlane.transform;
 			skyManager.CloudMaterial = cloudMat;
-			skyManager.CloudMaterial.SetFloat("_CloudSpeed", 0.03f);
 
 			skyManager.StarMaterial = starBox.GetComponent<MeshRenderer>().sharedMaterial;
-			skyManager.StarMaterial.SetFloat("_Exposure", 1.5f);
 
 			skyManager.SkyCam = skyCam.transform;
 			skyManager.SkyMaterial = skyMaterial;
 
-			skyManager.EnvCam = clearCam.transform;
+			skyManager.ClearCam = clearCam.transform;
 
 			skyManager.MoonBillboard = moonBillboard.transform;
+			skyManager.MoonMaterial = moonBillboard.GetComponent<MeshRenderer>().sharedMaterial;
 
 #if DEBUG
 			Debug.Log(">>> >>> >>> Setting Up Render Settings...");
