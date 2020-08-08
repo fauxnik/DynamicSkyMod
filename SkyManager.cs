@@ -84,7 +84,7 @@ namespace ProceduralSkyMod
 
 			// rotating the skybox 1 extra rotation per year causes the night sky to differ between summer and winter
 			float yearlyAngle = 360 * (clockTime.DayOfYear + dayFration) / DaysInYear;
-			float dailyAngle = 360 * dayFration;
+			float dailyAngle = 360 * dayFration + 180; // +180 swaps midnight & noon
 			skyboxNight.localRotation = Quaternion.Euler(-Main.settings.latitude, 0, (dailyAngle + yearlyAngle) % 360);
 			// anti-rotating the sun 1 rotation per year keeps the solar day centered on solar noon
 			sunMover.localRotation = Quaternion.Euler(0, 0, -yearlyAngle);
