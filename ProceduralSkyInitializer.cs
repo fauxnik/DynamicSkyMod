@@ -58,8 +58,6 @@ namespace ProceduralSkyMod
 			GameObject dsMaster = new GameObject() { name = "DynamicSkyMod" };
 			dsMaster.transform.Reset();
 			SkyManager skyManager = dsMaster.AddComponent<SkyManager>();
-			skyManager.latitude = 44.7872f;
-			skyManager.longitude = (float)(TimeZoneInfo.Local.GetUtcOffset(DateTime.Now).TotalHours + (TimeZoneInfo.Local.IsDaylightSavingTime(DateTime.Now) ? -1 : 0)) * 15;
 
 #if DEBUG
 			Debug.Log(">>> >>> >>> Setting Up Cameras...");

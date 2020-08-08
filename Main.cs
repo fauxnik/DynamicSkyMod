@@ -14,6 +14,7 @@ namespace ProceduralSkyMod
     {
 		public static bool enabled;
 		public static bool initialized;
+		public static Settings settings;
 
 		public static string Path { get; private set; }
 
@@ -22,8 +23,11 @@ namespace ProceduralSkyMod
 #if DEBUG
 			modEntry.OnUnload = Unload;
 #endif
+			try { settings = Settings.Load<Settings>(modEntry); } catch { }
 			Path = modEntry.Path;
 			modEntry.OnToggle = OnToggle;
+			modEntry.OnGUI = OnGui;
+			modEntry.OnSaveGUI = OnSaveGui;
 			return true; // If false the mod will show an error
 		}
 
@@ -33,6 +37,16 @@ namespace ProceduralSkyMod
 			return true;
 		}
 #endif
+
+		static void OnGui(UnityModManager.ModEntry modEntry)
+		{
+			settings.Draw(modEntry);
+		}
+
+		static void OnSaveGui(UnityModManager.ModEntry modEntry)
+		{
+			settings.Save(modEntry);
+		}
 
 		static bool OnToggle (UnityModManager.ModEntry modEntry, bool value)
 		{
