@@ -76,7 +76,8 @@ namespace ProceduralSkyMod
 			skyboxNight.localRotation = Quaternion.Euler(-Main.settings.latitude, 0, (dailyAngle + yearlyAngle) % 360);
 			// anti-rotating the sun 1 rotation per year keeps the solar day centered on solar noon
 			// +x rotation moves sun toward southern hemisphere
-			sunMover.localRotation = Quaternion.Euler(23.4f * Mathf.Cos(2 * Mathf.PI * yearFraction), 0, -yearlyAngle);
+			sunMover.localRotation = Quaternion.Euler(0, 0, -yearlyAngle);
+			Sun.transform.localPosition = new Vector3(0, 0, -10 * Mathf.Tan(23.4f * Mathf.PI / 180 * Mathf.Cos(2 * Mathf.PI * yearFraction)));
 			// moon is new when rotation around self.forward is 0
 			float phaseAngle = ComputeMoonPhase(solarTime);
 			moonBillboard.localRotation = Quaternion.Euler(-Main.settings.latitude + 23.4f + 5.14f, 0, (dailyAngle - phaseAngle) % 360);
